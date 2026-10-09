@@ -108,6 +108,15 @@ async function connectionsFor($: $, site: string): Promise<{ servers: string[]; 
   return { servers: found ? [found, ...FALLBACK_SERVERS] : FALLBACK_SERVERS, isFixed: false }
 }
 
+// A v2 connection's default compact view drops status categories, parents and labels, so ask
+// for the full view; a connector that does not know `view` gets the call without it.
+async function callFull($: $, name: string, args: Record<string, unknown>) {
+  const result = await $.mcp.call(name, 'searchJiraIssuesUsingJql', { ...args, view: 'full' })
+  const isUnknownView = result.isError && result.content.some(block => /unrecognized key.*"view"/i.test(block.text ?? ''))
+
+  return isUnknownView ? $.mcp.call(name, 'searchJiraIssuesUsingJql', args) : result
+}
+
 async function search(
   $: $,
   site: string,
@@ -116,12 +125,11 @@ async function search(
   { nextPageToken, maxResults = 100 }: { nextPageToken?: string; maxResults?: number } = {},
 ): Promise<SearchPage> {
   const { servers, isFixed } = await connectionsFor($, site)
-  // A v2 connection's default compact view drops status categories, parents and labels.
-  const args = { cloudId: site, jql, fields, maxResults, ...(nextPageToken && { nextPageToken }), ...(isFixed && { view: 'full' }) }
+  const args = { cloudId: site, jql, fields, maxResults, ...(nextPageToken && { nextPageToken }) }
   let firstError: unknown
   for (const name of servers) {
     try {
-      const text = resultText(await $.mcp.call(name, 'searchJiraIssuesUsingJql', args))
+      const text = resultText(await callFull($, name, args))
       const saved = savedOutputPath(text)
       const page = parsePage(saved ? ((await $.fs.read(saved)) as string) : text)
       if (!isFixed) await update($, server, () => name)

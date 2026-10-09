@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Statussen kloppen weer met de claude.ai-Atlassian-connector, die nu standaard een compact antwoord geeft zonder statuscategorie en parent: de mod vraagt bij elke koppeling `view: "full"`, en zonder `view` als een oudere connector dat niet kent.
+- De Nederlandse status "Wordt beoordeeld" telt als In Review.
+
 ## 0.2.0 (09-10-2026)
 
 - Eerste publieke versie.
