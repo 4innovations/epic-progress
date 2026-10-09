@@ -1,0 +1,28 @@
+{
+  "name": "epic-progress",
+  "owner": {
+    "name": "Quinventa"
+  },
+  "metadata": {
+    "description": "Claude Code-mod: de voortgang van je Jira-Epic als zijpaneel en statusregel.",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "epic-progress",
+      "description": "Zijpaneel en statusregel met de voortgang van de Jira-Epic waar het ticket van je sessie onder valt (ring, balk, tickets, ≈ sessies te gaan), met /epic-commando. Leest Jira via de Atlassian-connector.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Rutger Slager"
+      },
+      "source": "./plugins/epic-progress",
+      "category": "productivity",
+      "keywords": [
+        "jira",
+        "epic",
+        "progress",
+        "mod"
+      ]
+    }
+  ]
+}

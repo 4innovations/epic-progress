@@ -1,0 +1,31 @@
+{
+  "name": "epic-progress",
+  "version": "0.2.0",
+  "description": "Zijpaneel en statusregel met de voortgang van de Jira-Epic waar het ticket van je sessie onder valt",
+  "author": {
+    "name": "Rutger Slager"
+  },
+  "repository": "https://github.com/4innovations/epic-progress",
+  "license": "MIT",
+  "keywords": [
+    "jira",
+    "epic",
+    "progress",
+    "mod"
+  ],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "projects": {
+      "type": "string",
+      "title": "Jira-projecten",
+      "description": "Projectcodes waarvan de mod tickets en Epics toont, kommagescheiden (bijv. BDY,CUR)",
+      "default": "BDY"
+    },
+    "sites": {
+      "type": "string",
+      "title": "Jira-sites",
+      "description": "Atlassian-sites waarop de mod een project zoekt, in volgorde, kommagescheiden (bijv. quinventa,faimstudio)",
+      "default": "quinventa,faimstudio"
+    }
+  }
+}
