@@ -112,7 +112,7 @@ export function permissionRule(message: string, server: string): string | undefi
 export function bucketOf(status: string, category: string): StatusBucket {
   if (/won'?t do|cancel|geannuleerd|vervallen|duplicate/i.test(status)) return 'dropped'
   if (category === 'done') return 'done'
-  if (/review/i.test(status)) return 'review'
+  if (/review|beoordeel/i.test(status)) return 'review'
   if (category === 'indeterminate') return 'progress'
 
   return 'todo'

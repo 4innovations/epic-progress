@@ -352,3 +352,8 @@ test('browseUrl links a key on its Jira site', async () => {
 test('bucketOf counts a cancelled ticket in Dutch as dropped', async () => {
   expect(bucketOf('Geannuleerd', 'done')).toBe('dropped')
 })
+
+test('bucketOf counts a ticket under review in Dutch as review', async () => {
+  expect(bucketOf('Wordt beoordeeld', 'indeterminate')).toBe('review')
+  expect(bucketOf('Actief', 'indeterminate')).toBe('progress')
+})

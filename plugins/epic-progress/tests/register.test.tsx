@@ -37,9 +37,16 @@ const FIXED_SITE: Record<string, string> = { [BUDDY]: QUINVENTA, [FAIM]: FAIMSTU
 
 // `granted`: the sites the claude.ai connector's account can reach. `fixed`: the v2 connections
 // loaded in this session; `refused` are turned down by auto mode, `broken` answer with a 401.
+// `isV2Connector`: the claude.ai connector itself answers like a v2 connection, compact by default.
 function fakeJira(
   on: On,
-  { granted = [QUINVENTA, FAIMSTUDIO], fixed = [], refused = [], broken = [] }: { granted?: string[]; fixed?: string[]; refused?: string[]; broken?: string[] } = {},
+  {
+    granted = [QUINVENTA, FAIMSTUDIO],
+    fixed = [],
+    refused = [],
+    broken = [],
+    isV2Connector = false,
+  }: { granted?: string[]; fixed?: string[]; refused?: string[]; broken?: string[]; isV2Connector?: boolean } = {},
 ) {
   const issues = new Map<string, Issue>()
   for (const epic of EPICS) issues.set(epic.key, epic)
@@ -90,7 +97,8 @@ function fakeJira(
     if ((!isFixed && e.server !== SERVER) || e.tool !== 'searchJiraIssuesUsingJql') return error('unknown server')
     if (refused.includes(e.server)) return { deny: 'the auto mode classifier gave no verdict' } as never
     if (broken.includes(e.server)) return error('{"error":true,"message":"Unauthorized; scope does not match","statusCode":401}')
-    if (!isFixed && 'view' in e.args) return error('Input validation error: unrecognized key "view"')
+    const isV2 = isFixed || isV2Connector
+    if (!isV2 && 'view' in e.args) return error('Input validation error: unrecognized key "view"')
     const cloudId = String(e.args.cloudId)
     const site = CLOUD_IDS[cloudId] ?? cloudId
     if (isFixed && FIXED_SITE[e.server] !== site) return error('{"error":true,"message":"Unauthorized","statusCode":401}')
@@ -119,8 +127,8 @@ function fakeJira(
     if (isFixed && byProject && found.length === 0) {
       return error(`{"error":true,"message":"JQL validation failed: De waarde '${byProject[1]}' bestaat niet voor het veld 'project'.","statusCode":400}`)
     }
-    const nodes = found.map(node).map(one => (isFixed && e.args.view !== 'full' ? compact(one) : one))
-    const text = isFixed
+    const nodes = found.map(node).map(one => (isV2 && e.args.view !== 'full' ? compact(one) : one))
+    const text = isV2
       ? JSON.stringify({ data: { issues: nodes, isLast: true, appliedContentFormat: 'markdown' } })
       : JSON.stringify({ issues: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } })
 
@@ -734,4 +742,19 @@ test('a comment through the v2 tool refreshes the progress', async ($, on) => {
   await ui.settle()
 
   expect(ui.last()).toBe('BDY-750 ▰▰▰▰▰▰▱▱▱▱ 60% · nog 2 open ≈ 2 sessies')
+})
+
+test('a claude.ai connector that answers compact by default still shows each ticket’s status', async ($, on) => {
+  fakeJira(on, { isV2Connector: true })
+  const ui = capture(on)
+  await start($)
+
+  await $.command.run({ command: 'epic', args: 'BDY-1407' })
+  await ui.settle()
+
+  expect(ui.last()).toBe('BDY-750 ▰▰▰▰▱▱▱▱▱▱ 40% · nog 3 open ≈ 3 sessies')
+  const pane = await $.ui.mount({ ...PANE, surface: 'desktop', props: PANE_PROPS })
+  expect(await pane.find({ text: /In Review 1/ })).toBeDefined()
+  expect(await pane.find({ text: /In Progress 1/ })).toBeDefined()
+  await pane.unmount()
 })
